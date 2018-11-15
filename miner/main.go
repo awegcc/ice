@@ -21,7 +21,7 @@ const (
 )
 
 func main() {
-	server := flag.String("server", fmt.Sprintf("gortc.io:3478"), "Stun server address")
+	server := flag.String("server", fmt.Sprintf("aweg.cc:3478"), "Stun server address")
 	flag.Parse()
 
 	srvAddr, err := net.ResolveUDPAddr(udp, *server)
@@ -33,7 +33,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("dial:", err)
 	}
-
 	defer conn.Close()
 
 	log.Printf("Listening on %s\n", conn.LocalAddr())
@@ -61,7 +60,7 @@ func main() {
 
 			switch {
 			case string(message) == pingMsg:
-				log.Println("Received pong message.")
+				log.Println("Received ping message.")
 				keepaliveMsg = pongMsg
 
 			case string(message) == pongMsg:
@@ -72,7 +71,6 @@ func main() {
 				// One client may skip sending ping if it receives
 				// a ping message before knowning the peer address.
 				keepaliveMsg = pongMsg
-
 				gotPong = true
 
 			case stun.IsMessage(message):
@@ -90,9 +88,8 @@ func main() {
 				}
 
 				if publicAddr.String() != xorAddr.String() {
-					log.Printf("My public address: %s\n", xorAddr)
 					publicAddr = xorAddr
-
+					log.Printf("My public address: %s\n", publicAddr)
 					peerAddrChan = getPeerAddr()
 				}
 

@@ -21,7 +21,7 @@ const (
 )
 
 func main() {
-	server := flag.String("server", fmt.Sprintf("gortc.io:3478"), "Stun server address")
+	server := flag.String("server", fmt.Sprintf("aweg.cc:3478"), "Stun server address")
 	flag.Parse()
 
 	srvAddr, err := net.ResolveUDPAddr(udp, *server)
