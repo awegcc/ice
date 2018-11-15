@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 
 	"github.com/gortc/stun"
@@ -123,7 +124,15 @@ func normalize(address string) string {
 func main() {
 	network := flag.String("net", "udp", "network to listen")
 	address := flag.String("addr", "0.0.0.0:3478", "address to listen")
+	logfile := flag.String("logfile", "", "logfile")
 	flag.Parse()
+	if *logfile != "" {
+		fd, err := os.Create(*logfile)
+		if err != nil {
+			log.Fatal("Create file : ", err)
+		}
+		log.SetOutput(fd)
+	}
 	switch *network {
 	case "udp":
 		normalized := normalize(*address)
