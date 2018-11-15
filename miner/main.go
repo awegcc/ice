@@ -41,6 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("dial:", err)
 	}
+
 	defer conn.Close()
 
 	log.Printf("Listening on %s\n", conn.LocalAddr())
@@ -68,17 +69,18 @@ func main() {
 
 			switch {
 			case string(message) == pingMsg:
-				log.Println("Received ping message.")
+				log.Printf("Received %s message.", pingMsg)
 				keepaliveMsg = pongMsg
 
 			case string(message) == pongMsg:
 				if !gotPong {
-					log.Println("Received pong message.")
+					log.Printf("Received %s message.", pongMsg)
 				}
 
 				// One client may skip sending ping if it receives
 				// a ping message before knowning the peer address.
 				keepaliveMsg = pongMsg
+
 				gotPong = true
 
 			case stun.IsMessage(message):
@@ -96,8 +98,10 @@ func main() {
 				}
 
 				if publicAddr.String() != xorAddr.String() {
+					fmt.Printf("My public address: %s\n", xorAddr)
+					log.Printf("My public address: %s\n", xorAddr)
 					publicAddr = xorAddr
-					log.Printf("My public address: %s\n", publicAddr)
+
 					peerAddrChan = getPeerAddr()
 				}
 
@@ -108,8 +112,10 @@ func main() {
 		case peerStr := <-peerAddrChan:
 			peerAddr, err = net.ResolveUDPAddr(udp, peerStr)
 			if err != nil {
-				log.Fatalln("resolve peeraddr:", err)
+				fmt.Println("resolve peeraddr error :", err)
+				log.Fatalln("resolve peeraddr error :", err)
 			}
+			fmt.Printf("resolve peeraddr: %v\n", peerAddr)
 			log.Printf("resolve peeraddr: %v\n", peerAddr)
 
 		case <-keepalive:
@@ -146,7 +152,7 @@ func getPeerAddr() <-chan string {
 
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
-		log.Println("Enter remote peer address:")
+		fmt.Printf("Enter remote peer address:")
 		peer, _ := reader.ReadString('\n')
 		result <- strings.Trim(peer, " \r\n")
 	}()
@@ -160,11 +166,12 @@ func listen(conn *net.UDPConn) <-chan []byte {
 		for {
 			buf := make([]byte, 1024)
 
-			n, _, err := conn.ReadFromUDP(buf)
+			n, addr, err := conn.ReadFromUDP(buf)
 			if err != nil {
 				close(messages)
 				return
 			}
+			log.Printf("read from addr: %v\n", addr)
 			buf = buf[:n]
 
 			messages <- buf

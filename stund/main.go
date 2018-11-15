@@ -22,10 +22,18 @@ type Server struct {
 	LogAllErrors bool
 }
 
+// Miner is host ready to user
+type Miner struct {
+	IP   net.IP
+	Port int
+}
+
 var (
 	software          = stun.NewSoftware("gortc/stund")
 	errNotSTUNMessage = errors.New("not stun message")
 )
+
+var miners []Miner
 
 func basicProcess(addr net.Addr, b []byte, req, res *stun.Message) error {
 	if !stun.IsMessage(b) {
@@ -34,23 +42,21 @@ func basicProcess(addr net.Addr, b []byte, req, res *stun.Message) error {
 	if _, err := req.Write(b); err != nil {
 		return err
 	}
-	var (
-		ip   net.IP
-		port int
-	)
+	var miner Miner
 	switch a := addr.(type) {
 	case *net.UDPAddr:
-		ip = a.IP
-		port = a.Port
+		miner.IP = a.IP
+		miner.Port = a.Port
 	default:
 		panic(fmt.Sprintf("unknown addr: %v", addr))
 	}
+	//miners = append(miners, miner)
 	return res.Build(req,
 		stun.BindingSuccess,
 		software,
 		&stun.XORMappedAddress{
-			IP:   ip,
-			Port: port,
+			IP:   miner.IP,
+			Port: miner.Port,
 		},
 		stun.Fingerprint,
 	)
@@ -66,7 +72,7 @@ func (s *Server) serveConn(c net.PacketConn, res, req *stun.Message) error {
 		log.Printf("ReadFrom: %v", err)
 		return nil
 	}
-	// s.log().Printf("read %d bytes from %s", n, addr)
+	log.Printf("read %d bytes from %s", n, addr)
 	if _, err = req.Write(buf[:n]); err != nil {
 		log.Printf("Write: %v", err)
 		return err
@@ -91,6 +97,7 @@ func (s *Server) Serve(c net.PacketConn) error {
 		res = new(stun.Message)
 		req = new(stun.Message)
 	)
+	miners = make([]Miner, 0, 32)
 	for {
 		if err := s.serveConn(c, res, req); err != nil {
 			log.Printf("serve: %v", err)
