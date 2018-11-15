@@ -17,7 +17,7 @@ const (
 	udp           = "udp4"
 	pingMsg       = "ping"
 	pongMsg       = "pong"
-	timeoutMillis = 1000
+	timeoutMillis = 3000
 )
 
 func main() {
