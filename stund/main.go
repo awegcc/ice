@@ -137,6 +137,7 @@ func main() {
 	case "udp":
 		normalized := normalize(*address)
 		fmt.Println("gortc/stund listening on", normalized, "via", *network)
+		log.Println("gortc/stund listening on", normalized, "via", *network)
 		log.Fatal(ListenUDPAndServe(*network, normalized))
 	default:
 		log.Fatalln("unsupported network:", *network)
