@@ -69,11 +69,13 @@ func main() {
 
 			switch {
 			case string(message) == pingMsg:
+				fmt.Printf("Received %s message.\n", pingMsg)
 				log.Printf("Received %s message.", pingMsg)
 				keepaliveMsg = pongMsg
 
 			case string(message) == pongMsg:
 				if !gotPong {
+					fmt.Printf("Received %s message.\n", pongMsg)
 					log.Printf("Received %s message.", pongMsg)
 				}
 
