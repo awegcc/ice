@@ -127,7 +127,7 @@ func main() {
 	logfile := flag.String("logfile", "", "logfile")
 	flag.Parse()
 	if *logfile != "" {
-		fd, err := os.Create(*logfile)
+		fd, err := os.OpenFile(*logfile, os.O_CREATE|os.O_CREATE|os.O_RDWR, 0644)
 		if err != nil {
 			log.Fatal("Create file : ", err)
 		}
