@@ -43,8 +43,8 @@ func main() {
 	}
 
 	defer conn.Close()
-
-	log.Printf("Listening on %s\n", conn.LocalAddr())
+	fmt.Printf("Listening address: %s\n", conn.LocalAddr())
+	log.Printf("Listening address: %s\n", conn.LocalAddr())
 
 	var publicAddr stun.XORMappedAddress
 	var peerAddr *net.UDPAddr
