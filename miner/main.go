@@ -21,8 +21,16 @@ const (
 )
 
 func main() {
-	server := flag.String("server", fmt.Sprintf("aweg.cc:3478"), "Stun server address")
+	server := flag.String("server", fmt.Sprintf("chare.cc:20022"), "Stun server address")
+	logfile := flag.String("logfile", "/tmp/stun.log", "logfile")
 	flag.Parse()
+	if *logfile != "" {
+		fd, err := os.OpenFile(*logfile, os.O_CREATE|os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			log.Fatal("Create file : ", err)
+		}
+		log.SetOutput(fd)
+	}
 
 	srvAddr, err := net.ResolveUDPAddr(udp, *server)
 	if err != nil {

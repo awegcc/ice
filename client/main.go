@@ -21,8 +21,16 @@ const (
 )
 
 func main() {
-	server := flag.String("server", fmt.Sprintf("aweg.cc:3478"), "Stun server address")
+	server := flag.String("server", fmt.Sprintf("chare.cc:20022"), "Stun server address")
+	logfile := flag.String("logfile", "/tmp/stun.log", "logfile")
 	flag.Parse()
+	if *logfile != "" {
+		fd, err := os.OpenFile(*logfile, os.O_CREATE|os.O_CREATE|os.O_RDWR, 0644)
+		if err != nil {
+			log.Fatal("Create file : ", err)
+		}
+		log.SetOutput(fd)
+	}
 
 	srvAddr, err := net.ResolveUDPAddr(udp, *server)
 	if err != nil {
@@ -61,12 +69,12 @@ func main() {
 
 			switch {
 			case string(message) == pingMsg:
-				log.Println("Received pong message.")
+				log.Printf("Received %s message.", pingMsg)
 				keepaliveMsg = pongMsg
 
 			case string(message) == pongMsg:
 				if !gotPong {
-					log.Println("Received pong message.")
+					log.Printf("Received %s message.", pongMsg)
 				}
 
 				// One client may skip sending ping if it receives
@@ -90,6 +98,7 @@ func main() {
 				}
 
 				if publicAddr.String() != xorAddr.String() {
+					fmt.Printf("My public address: %s\n", xorAddr)
 					log.Printf("My public address: %s\n", xorAddr)
 					publicAddr = xorAddr
 
@@ -103,8 +112,10 @@ func main() {
 		case peerStr := <-peerAddrChan:
 			peerAddr, err = net.ResolveUDPAddr(udp, peerStr)
 			if err != nil {
-				log.Fatalln("resolve peeraddr:", err)
+				fmt.Println("resolve peeraddr error :", err)
+				log.Fatalln("resolve peeraddr error :", err)
 			}
+			fmt.Printf("resolve peeraddr: %v\n", peerAddr)
 			log.Printf("resolve peeraddr: %v\n", peerAddr)
 
 		case <-keepalive:
@@ -141,7 +152,7 @@ func getPeerAddr() <-chan string {
 
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
-		log.Println("Enter remote peer address:")
+		fmt.Printf("Enter remote peer address:")
 		peer, _ := reader.ReadString('\n')
 		result <- strings.Trim(peer, " \r\n")
 	}()
@@ -155,11 +166,12 @@ func listen(conn *net.UDPConn) <-chan []byte {
 		for {
 			buf := make([]byte, 1024)
 
-			n, _, err := conn.ReadFromUDP(buf)
+			n, addr, err := conn.ReadFromUDP(buf)
 			if err != nil {
 				close(messages)
 				return
 			}
+			log.Printf("read from addr: %v\n", addr)
 			buf = buf[:n]
 
 			messages <- buf
