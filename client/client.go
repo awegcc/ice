@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	server1       = "aweg.cc:3478"
 	udp           = "udp4"
 	pingMsg       = "ping"
 	pongMsg       = "pong"
@@ -21,7 +22,7 @@ const (
 )
 
 func main() {
-	server := flag.String("server", fmt.Sprintf("chare.cc:20022"), "Stun server address")
+	server2 := flag.String("server", fmt.Sprintf("chare.cc:20022"), "Stun server address")
 	logfile := flag.String("logfile", "/tmp/stun.log", "logfile")
 	flag.Parse()
 	if *logfile != "" {
@@ -32,10 +33,16 @@ func main() {
 		log.SetOutput(fd)
 	}
 
-	srvAddr, err := net.ResolveUDPAddr(udp, *server)
+	srvAddr1, err := net.ResolveUDPAddr(udp, server1)
 	if err != nil {
 		log.Fatalln("resolve serveraddr:", err)
 	}
+	srvAddr2, err := net.ResolveUDPAddr(udp, *server2)
+	if err != nil {
+		log.Fatalln("resolve serveraddr:", err)
+	}
+	fmt.Println("server1: ", srvAddr1)
+	fmt.Println("server2: ", srvAddr2)
 
 	conn, err := net.ListenUDP(udp, nil)
 	if err != nil {
@@ -46,7 +53,7 @@ func main() {
 	fmt.Printf("Listening address: %s\n", conn.LocalAddr())
 	log.Printf("Listening address: %s\n", conn.LocalAddr())
 
-	var publicAddr stun.XORMappedAddress
+	var publicAddr1, publicAddr2 stun.XORMappedAddress
 	var peerAddr *net.UDPAddr
 
 	messageChan := listen(conn)
@@ -99,10 +106,11 @@ func main() {
 					break
 				}
 
-				if publicAddr.String() != xorAddr.String() {
+				if publicAddr1.String() != xorAddr.String() && publicAddr2.String() != xorAddr.String() {
 					fmt.Printf("My public address: %s\n", xorAddr)
 					log.Printf("My public address: %s\n", xorAddr)
-					publicAddr = xorAddr
+					publicAddr1 = xorAddr
+					publicAddr2 = xorAddr
 
 					peerAddrChan = getPeerAddr()
 				}
@@ -123,8 +131,15 @@ func main() {
 		case <-keepalive:
 			// Keep NAT binding alive using STUN server or the peer once it's known
 			if peerAddr == nil {
-				//log.Printf("peerAddr is nil , send bind request to %v\n", srvAddr)
-				err = sendBindingRequest(conn, srvAddr)
+				//log.Printf("peerAddr is nil , send bind request to %v\n", srvAddr2)
+				err = sendBindingRequest(conn, srvAddr1)
+				if err != nil {
+					fmt.Println("sendBindingRequest error: ", err)
+				}
+				err = sendBindingRequest(conn, srvAddr2)
+				if err != nil {
+					fmt.Println("sendBindingRequest error: ", err)
+				}
 			} else {
 				log.Printf("send keepalive %v to %v\n", keepaliveMsg, peerAddr)
 				err = sendStr(keepaliveMsg, conn, peerAddr)
