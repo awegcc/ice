@@ -62,7 +62,7 @@ func main() {
 	keepalive := time.Tick(timeoutMillis * time.Millisecond)
 	keepaliveMsg := pingMsg
 
-	var quit <-chan time.Time
+	var quitChan <-chan time.Time
 
 	gotPong := false
 	sentPong := false
@@ -152,14 +152,14 @@ func main() {
 				log.Fatalln("keepalive:", err)
 			}
 
-		case <-quit:
+		case <-quitChan:
 			log.Println("quit !!")
 			conn.Close()
 		}
 
-		if quit == nil && gotPong && sentPong {
+		if quitChan == nil && gotPong && sentPong {
 			log.Println("Success! Quitting in two seconds.")
-			quit = time.After(8 * time.Second)
+			quitChan = time.After(8 * time.Second)
 		}
 	}
 }
